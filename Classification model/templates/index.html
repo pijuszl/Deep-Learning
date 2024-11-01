@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Trained Model API</title>
+  </head>
+  <body>
+    <h1>Trained Model API</h1>
+    <h2>Submit an Image for Prediction</h2>
+    <form id="predictForm" enctype="multipart/form-data">
+      <input type="file" name="image" id="imageInput" required />
+      <button type="submit">Predict</button>
+    </form>
+    <br />
+    <img
+      id="uploadedImage"
+      src="#"
+      alt="Uploaded Image"
+      style="display: none; max-width: 500px; max-height: 500px"
+    />
+    <p id="predictionResult"></p>
+
+    <script>
+      document.getElementById("predictForm").onsubmit = function (e) {
+        e.preventDefault();
+        var formData = new FormData();
+        formData.append(
+          "image",
+          document.getElementById("imageInput").files[0]
+        );
+
+        fetch("/predict", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("predictionResult").textContent =
+              "Prediction: " +
+              data.prediction +
+              " (" +
+              (data.probability * 100).toFixed(2) +
+              "%)";
+            var reader = new FileReader();
+            reader.onload = function (e) {
+              document.getElementById("uploadedImage").src = e.target.result;
+              document.getElementById("uploadedImage").style.display = "block";
+            };
+            reader.readAsDataURL(
+              document.getElementById("imageInput").files[0]
+            );
+          })
+          .catch((error) => console.error("Error:", error));
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Image Upload and Display</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      #uploadForm {
+        margin-bottom: 20px;
+      }
+      #imagesContainer {
+        position: relative;
+        width: 256px; /* Set the container width */
+        height: 256px; /* Set the container height */
+      }
+      #imagesContainer img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%; /* Force the image to fill the container */
+        height: 100%; /* Force the image to fill the container */
+        object-fit: cover; /* Preserve aspect ratio while filling the area */
+      }
+      #maskImage {
+        opacity: 0.6; /* Adjust mask transparency */
+      }
+      .legend {
+        margin-top: 20px;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Upload Image</h1>
+    <form id="uploadForm">
+      <input type="file" id="imageInput" />
+      <button type="button" onclick="uploadImage()">Upload</button>
+    </form>
+    <div id="imagesContainer">
+      <img
+        id="originalImage"
+        src="#"
+        alt="Original Image"
+        style="display: none"
+      />
+      <img id="maskImage" src="#" alt="Mask Image" style="display: none" />
+    </div>
+    <div class="legend">
+      <p><strong>Legend:</strong></p>
+      <p><span style="color: red">■</span> Airplane</p>
+      <p><span style="color: green">■</span> Car</p>
+      <p><span style="color: blue">■</span> Person</p>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function () {
+        document
+          .getElementById("uploadForm")
+          .addEventListener("submit", function (event) {
+            event.preventDefault(); // Prevent the default form submission
+            uploadImage();
+          });
+      });
+
+      function uploadImage() {
+        const formData = new FormData();
+        const imageFile = document.getElementById("imageInput").files[0];
+        if (!imageFile) {
+          console.error("Please select an image file to upload.");
+          return;
+        }
+
+        formData.append("image", imageFile);
+        fetch("/predict", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.error) {
+              console.error("Error:", data.error);
+            } else {
+              const originalImg = document.getElementById("originalImage");
+              originalImg.src = URL.createObjectURL(imageFile); // Show original image
+              originalImg.style.display = "block";
+
+              const maskImg = document.getElementById("maskImage");
+              maskImg.src = "data:image/png;base64," + data.image; // Show mask image
+              maskImg.style.display = "block";
+
+              console.log("Unique prediction values:", data.unique_values);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+          });
+      }
+    </script>
+  </body>
+</html>
